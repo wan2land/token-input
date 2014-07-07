@@ -8,26 +8,39 @@ form {
 }
 
 form.style-inline {
+	> div.controller {
+		position:relative;
 
+		> input {
+			border:1px solid #ccc;
+			margin:0;padding:2px;
+			height:28px;width:100%;
+			box-sizing:border-box;
+		}
+	}
 	ul.token-input {
 		border:1px solid #ccc;
-		margin:0;padding:3px;
+		margin:0;padding:2px;
 		list-style:none;
 
 		font-size:0;
 		cursor:text;
-		height:20px;
+		min-height:20px;
 
 		> li.input {
+			margin:1px;
 			display:inline-block;
 
 			&-token {
 				border:1px solid #CCD5E4;
 				border-radius:3px;
 				padding:1px 3px;
-				margin:0;
 				font-size:0;
 				height:16px;
+				cursor:default;
+				&.hover {
+					background:#eee;
+				}
 				> input {
 					display:none;
 				}
@@ -54,6 +67,43 @@ form.style-inline {
 					height:20px;
 					&:focus {outline:0;}
 				}
+			}
+		}
+		& + div.autocomplete {
+			
+			&.active {visibility:visible;}
+
+			visibility:hidden;
+			position:absolute;
+			top:100%;
+			left:0;
+			margin-top:-1px;
+			width:398px;
+			min-height:30px;
+			max-height:120px;
+			overflow:scroll;
+			border:1px solid #ccc;
+			background:#fafafa;
+			z-index:99;
+
+			-moz-user-select: -moz-none;
+			-khtml-user-select: none;
+			-webkit-user-select: none;
+
+			/*
+			Introduced in IE 10.
+			See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+			*/
+			-ms-user-select: none;
+			user-select:none;
+
+			> div {
+				padding:5px 3px;
+				font-size:12px;
+				line-height:20px;
+				height:20px;
+				cursor:pointer;
+				&.hover { background:#ddfafa;}
 			}
 		}
 	}
