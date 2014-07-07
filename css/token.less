@@ -1,0 +1,61 @@
+div.container {
+	width:800px;
+	margin-left:auto;margin-right:auto;
+}
+
+form {
+	width:400px;
+}
+
+form.style-inline {
+
+	ul.token-input {
+		border:1px solid #ccc;
+		margin:0;padding:3px;
+		list-style:none;
+
+		font-size:0;
+		cursor:text;
+		height:20px;
+
+		> li.input {
+			display:inline-block;
+
+			&-token {
+				border:1px solid #CCD5E4;
+				border-radius:3px;
+				padding:1px 3px;
+				margin:0;
+				font-size:0;
+				height:16px;
+				> input {
+					display:none;
+				}
+				> p {
+					display:inline-block;
+					margin:0;padding:0;
+					line-height:16px;
+					font-size:11px;
+				}
+				> span {
+					font-size:11px;
+					&::before {
+						display:inline-block;
+						padding-left:5px;
+						content:'x';
+					}
+				}
+			}
+			&-ing {
+				> input {
+					border:0;padding:0;margin:0;
+					line-height:20px;
+					font-size:11px;
+					height:20px;
+					&:focus {outline:0;}
+				}
+			}
+		}
+	}
+
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<!--//
+This web page has been developed by Wani.
+ - me@wani.kr
+ - http://wani.kr
+-->
+<html lang="ko">
+<head>
+
+<title>title</title>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+<!--[if lt IE 9]>
+<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/normalize/3.0.1/normalize.min.css" />
+<link rel="stylesheet" href="/css/token.css" />
+
+</head>
+<body>
+
+<div class="container">
+
+	<h2>Inline Style Multitoken</h2>
+
+	<form class="style style-inline" action="action.php" method="POST">
+		<div class="controller controller-multitoken">
+			<input type="text" class="token-input" name="multitoken[]" />
+		</div>
+		<div class="controller controller-submit">
+			<button>전송</button>
+		</div>
+	</form>
+
+
+	<form class="style style-inline" action="action.php" method="POST">
+		<div class="controller controller-multitoken">
+			<input type="text" class="token-input" name="multitoken[]" />
+		</div>
+		<div class="controller controller-submit">
+			<button>전송</button>
+		</div>
+	</form>
+
+</div>
+
+
+<script src="/vendor/require.js" data-main="/src/main"></script>
+<!--
+<script src="/vendor/zepto.min.js"></script>
+<script src="/src/token-input.js"></script>
+-->
+</body>
+</html>
