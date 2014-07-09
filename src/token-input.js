@@ -33,6 +33,9 @@
 		// 이 옵션은 반드시 해당 데이터안에서만 사용을 할 수 있도록 합니다.
 		use_data_only : false,
 
+		// 중복값 사용가능 (O)
+		use_duplicate : false,
+
 		// 결과를 몇개까지 찾을 것인가.
 		max_result : 4
 	},
@@ -45,53 +48,77 @@
 			// render :)
 			var
 			self = $(this),
-			elem_container = $('<ul class="token-input"><li class="input input-ing"></li></ul>'),
-			elem_autocomplete = $('<div class="autocomplete"></div>'),
-			origin_input = null,
 
+			elem_container = $('<ul class="token-input"></ul>'),
+
+			elem_text = $('<li class="input input-ing"></li>'),
+			elem_text_input = $('<input type="text" autocomplete="off" />'),
+
+			elem_autocomplete = $('<div class="autocomplete"></div>'),
+			
+			elem_token = $('<li class="input input-token"></li>'),
+			elem_token_input = $('<input type="hidden" name="' + self[0].name +'" />'), // self.clone(),
+
+			// use in autocomplete, timeout.
 			is_ing_autocomplete = false,
 			st_id = 0,
+
+			bs_status = 0,
 			
 			initialize = function() {
-				
-				self.attr('autocomplete', 'off');
+
+				// create Element :)				
 				self.before( elem_container );
-				elem_container.find('li.input-ing').append( self );
+
+				elem_container.append( elem_text );
 				elem_container.after( elem_autocomplete );
 
-				origin_input = self.clone();
+				elem_text.append(elem_text_input);
+
+				self.remove();
 
 				// event bind
 				elem_container.bind('click', actionFocusInput);
 
-				elem_container.on('keydown', 'input', actionKeydown);
+				elem_text_input.bind('keydown', actionKeydown);
 
-				elem_autocomplete.on('mouseenter', 'div', actionenterAutocomplete);
-				elem_autocomplete.on('click', 'div', function(e) {
-					e.preventDefault();
-					actionInsertToken();
-				});
+				elem_autocomplete.on('mouseenter', 'div', actionEnterACItem);
+				elem_autocomplete.on('click', 'div', actionClickACItem);
 
-				elem_container.parents('form').bind('submit', function() {
-					elem_container.find('li.input-ing > input').remove();
-				});
+				elem_container.on('mouseenter', 'li.input-token', actionEnterToken);
+				elem_container.on('click', 'li.input-token', actionClickToken);
 
 			},
-
-			actionInsertToken = function() {
+			actionEnterToken = function() {
+				$(this).siblings().removeClass('hover');
+			},
+			actionClickToken = function( e ) {
+				e.preventDefault();
+				$(this).addClass('hover');
+				removeToken();
+			},
+			removeToken = function() {
+				elem_container.find('li.input-token.hover').remove();
+			},
+			insertToken = function() {
 				var
-				current_li = elem_container.find('li.input-ing'),
 				autocomplete_hover = elem_autocomplete.find('div.hover');
 
 				if ( autocomplete_hover.length === 0 ) {
 					return;
 				}
 
-				current_li.find('input').val( autocomplete_hover.data('value') );
-				current_li.append('<p>' + autocomplete_hover.text() + '</p>');
-				current_li.append('<span class="close"></span>');
+				var
+				new_elem_token = elem_token.clone(),
+				new_elem_token_input = elem_token_input.clone();
 
-				current_li.addClass('input-token').removeClass('input-ing');
+				new_elem_token.append( new_elem_token_input );
+				new_elem_token.append('<p>' + autocomplete_hover.text() + '</p><span class="close"></span>');
+
+				new_elem_token_input.val( autocomplete_hover.data('value') );
+
+				elem_text.before( new_elem_token );
+				elem_text_input.val('');
 
 				hideAutocomplete();
 				actionFocusInput();
@@ -103,38 +130,67 @@
 
 				switch( e.keyCode ) {
 					case KEY.ENTER :
-					case KEY.TAB :
+					//case KEY.TAB :
 					case KEY.NUMPAD_ENTER :
 					case KEY.COMMA :
 						e.preventDefault();
 						if ( value === "" ) return;
-						actionInsertToken();
+						insertToken();
 						break;
 					case KEY.DOWN :
 						e.preventDefault();
-						if ( elem_autocomplete.hasClass('active') ) actionNextAutocomplete.apply( self, arguments );
+						if ( elem_autocomplete.hasClass('active') ) nextAutocomplete.apply( self, arguments );
 						break;
 					case KEY.UP :
 						e.preventDefault();
-						if ( elem_autocomplete.hasClass('active') ) actionPrevAutocomplete.apply( self, arguments );
+						if ( elem_autocomplete.hasClass('active') ) prevAutocomplete.apply( self, arguments );
 						break;
 					case KEY.LEFT :
+					case KEY.RIGHT : 
 						e.preventDefault();
+						var hover_token = elem_container.find('li.input-token.hover');
+						
+						if ( hover_token.length !== 0 ) {
+							var hover_next_token;
+							if ( e.keyCode === KEY.LEFT ) {
+								hover_next_token = hover_token.prev();
+							}
+							else {
+								hover_next_token = hover_token.next();
+							}
+							if ( hover_next_token.length !== 0 ) {
+								hover_next_token.addClass('hover').siblings().removeClass('hover');
+								if ( hover_next_token.hasClass('input-token') ) {
+									hover_next_token.addClass('hover');
+								}
+								hover_next_token.siblings().removeClass('hover');
+							}
+						
+						}
+						else if ( e.keyCode === KEY.LEFT ) {
+							elem_container.find('li.input-token').eq(-1).addClass('hover');
+						}
 						break;
-					case KEY.RIGHT :
-						e.preventDefault();
-
-						break;
-
 					case KEY.ESCAPE :
 						e.preventDefault();
-
-
+						hideAutocomplete();
 						break;
 					case KEY.BACKSPACE :
-						//e.preventDefault();
-
-						//break;
+						// 이때만 작동해야하고 그 이외에는 정상적으로 현재 폼에있는 글씨 지우는걸로.
+						if ( value === "" ) {
+							e.preventDefault();
+							var hover_token = elem_container.find('li.input-token.hover');
+							if ( hover_token.length === 0 ) {
+								var last_token = elem_container.find('li.input-token').eq(-1);
+								if( ! last_token.hasClass('hover') ) {
+									last_token.addClass('hover');
+								}
+							}
+							else {
+								removeToken();
+							}
+							break;
+						}
 					default :
 						//is_run = false;
 						if ( st_id && ! is_ing_autocomplete ) {
@@ -154,7 +210,17 @@
 				var
 				value = $(this).val(),
 				re = new RegExp(value, "i"),
-				result = [];
+				result = [],
+				current_values = [];
+
+				if ( ! settings.use_duplicate ) {
+					elem_container.find('li.input-token > input').each(function(i, item) {
+						if ( typeof item.value !== "undefined" ) {
+							current_values.push( parseInt(item.value) );							
+						} 
+					});
+
+				}
 
 				if ( value === "" ) {
 					hideAutocomplete();
@@ -162,7 +228,9 @@
 				}
 
 				for( var i = settings.values.length; i--; ) {
-					if ( re.test( settings.values[i]['name'] ) ) {
+					if ( re.test( settings.values[i]['name'] ) &&
+								$.inArray( settings.values[i]['id'], current_values ) === -1 ) {
+
 						result.push( settings.values[i] );
 						if ( result.length >= settings.max_result ) {
 							break;
@@ -190,7 +258,7 @@
 				elem_autocomplete.empty();
 			},
 			// 키보드로 아래 눌렀을 때.
-			actionNextAutocomplete = function() {
+			nextAutocomplete = function() {
 				var
 				current = elem_autocomplete.find('div.hover'),
 				next = current.next();
@@ -203,7 +271,7 @@
 				next.addClass('hover');
 			},
 			// 키보드로 위 눌렀을 때.
-			actionPrevAutocomplete = function() {
+			prevAutocomplete = function() {
 				var
 				current = elem_autocomplete.find('div.hover'),
 				prev = current.prev();
@@ -215,18 +283,15 @@
 				current.removeClass('hover');
 				prev.addClass('hover');
 			},
-			actionenterAutocomplete = function( e ) {
-				$(this).siblings().removeClass('hover');
-				$(this).addClass('hover');
+			actionEnterACItem = function( e ) {
+				$(this).addClass('hover').siblings().removeClass('hover');
+			},
+			actionClickACItem = function( e ) {
+				e.preventDefault();
+				insertToken();
 			},
 			actionFocusInput = function() {
-				var input = elem_container.find('li.input-ing');
-				if ( input.length === 0 ) {
-					input = $('<li class="input input-ing"></li>');
-					input.append( origin_input.clone() );
-					elem_container.append( input );
-				}
-				input.find('input').focus();
+				elem_text_input.focus();
 			};
 
 			initialize();

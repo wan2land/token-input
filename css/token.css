@@ -36,9 +36,10 @@ form.style-inline ul.token-input > li.input-token {
   padding: 1px 3px;
   font-size: 0;
   height: 16px;
-  cursor: default;
+  cursor: pointer;
 }
-form.style-inline ul.token-input > li.input-token.active {
+form.style-inline ul.token-input > li.input-token.hover,
+form.style-inline ul.token-input > li.input-token:hover {
   background: #eee;
 }
 form.style-inline ul.token-input > li.input-token > input {
