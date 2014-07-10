@@ -1,3 +1,6 @@
+/**
+ *
+ */
 ;(function(global, factory){
 	if ( typeof define === 'function' && define.amd ) {
 		define(['vendor/zepto.min'], factory);
@@ -8,20 +11,6 @@
 })(this, function( $ ){
 
 	var
-
-	KEY = {
-		BACKSPACE: 8,
-		TAB: 9,
-		ENTER: 13,
-		ESCAPE: 27,
-		LEFT: 37,
-		UP: 38,
-		RIGHT: 39,
-		DOWN: 40,
-		NUMPAD_ENTER: 108,
-		COMMA: 188
-	},
-
 	DEFAULT_SETTINGS = {
 		values : [],
 
@@ -101,6 +90,9 @@
 				elem_container.on('click', 'li.input-token', actionClickToken);
 
 			},
+			getHoveredToken = function() {
+				return elem_container.find('li.input-token.hover');
+			},
 			actionEnterToken = function() {
 				$(this).siblings().removeClass('hover');
 			},
@@ -110,7 +102,7 @@
 				removeToken();
 			},
 			removeToken = function() {
-				elem_container.find('li.input-token.hover').remove();
+				getHoveredToken().remove();
 			},
 			refreshToken = function() {
 				var tokens = elem_container.find('li.input-token');
@@ -150,13 +142,14 @@
 			actionKeydown = function( e ) {
 				var
 				self = this,
-				value = $(this).val();
+				value = $(this).val(),
+				key_code = e.keyCode;
 
-				switch( e.keyCode ) {
-					case KEY.ENTER :
-					//case KEY.TAB :
-					case KEY.NUMPAD_ENTER :
-					case KEY.COMMA :
+				switch( key_code ) {
+					//case 9 : // TAB 
+					case 13 : // ENTER
+					case 108 : // NUMPAD_ENTER
+					case 188 : // COMMA: 188
 						e.preventDefault();
 						if ( value === "" ) return;
 						var ac_hover = elem_autocomplete.find('div.hover');
@@ -165,22 +158,34 @@
 							actionFocusInput();
 						}
 						break;
-					case KEY.DOWN :
+					case 40 : // DOWN: 40,
+					case 38 : // UP: 38,
 						e.preventDefault();
-						if ( elem_autocomplete.hasClass('active') ) nextAutocomplete.apply( self, arguments );
+						if ( elem_autocomplete.hasClass('active') ) {
+							var
+							current = elem_autocomplete.find('div.hover'),
+							next;
+
+							if ( key_code == 40 ) {
+								next = current.next();
+							}
+							else {
+								next = current.prev();
+							}
+							if ( next.length ) {
+								current.removeClass('hover');
+								next.addClass('hover');
+							}
+						} //nextAutocomplete.apply( self, arguments );
 						break;
-					case KEY.UP :
+					case 37 : // LEFT: 37
+					case 39 : // RIGHT: 39
 						e.preventDefault();
-						if ( elem_autocomplete.hasClass('active') ) prevAutocomplete.apply( self, arguments );
-						break;
-					case KEY.LEFT :
-					case KEY.RIGHT : 
-						e.preventDefault();
-						var hover_token = elem_container.find('li.input-token.hover');
+						var hover_token = getHoveredToken();
 						
 						if ( hover_token.length !== 0 ) {
 							var hover_next_token;
-							if ( e.keyCode === KEY.LEFT ) {
+							if ( key_code === 37 ) {
 								hover_next_token = hover_token.prev();
 							}
 							else {
@@ -195,19 +200,19 @@
 							}
 						
 						}
-						else if ( e.keyCode === KEY.LEFT ) {
+						else if ( key_code === 37 ) {
 							elem_container.find('li.input-token').eq(-1).addClass('hover');
 						}
 						break;
-					case KEY.ESCAPE :
+					case 27 : // ESCAPE
 						e.preventDefault();
 						hideAutocomplete();
 						break;
-					case KEY.BACKSPACE :
+					case 8 : // Backspace
 						// 이때만 작동해야하고 그 이외에는 정상적으로 현재 폼에있는 글씨 지우는걸로.
 						if ( value === "" ) {
 							e.preventDefault();
-							var hover_token = elem_container.find('li.input-token.hover');
+							var hover_token = getHoveredToken();
 							if ( hover_token.length === 0 ) {
 								var last_token = elem_container.find('li.input-token').eq(-1);
 								if( ! last_token.hasClass('hover') ) {
@@ -257,7 +262,7 @@
 
 				for( var i = settings.values.length; i--; ) {
 					if ( re.test( settings.values[i]['name'] ) &&
-								$.inArray( String(settings.values[i]['id']), current_values ) === -1 ) {
+								$.inArray( settings.values[i]['id']+"", current_values ) === -1 ) {
 
 						result.push( settings.values[i] );
 						if ( result.length >= settings.max_result ) {
@@ -284,32 +289,6 @@
 			hideAutocomplete = function() {
 				elem_autocomplete.removeClass('active');
 				elem_autocomplete.empty();
-			},
-			// 키보드로 아래 눌렀을 때.
-			nextAutocomplete = function() {
-				var
-				current = elem_autocomplete.find('div.hover'),
-				next = current.next();
-
-				if ( next.length === 0 ) {
-					return;
-				}
-
-				current.removeClass('hover');
-				next.addClass('hover');
-			},
-			// 키보드로 위 눌렀을 때.
-			prevAutocomplete = function() {
-				var
-				current = elem_autocomplete.find('div.hover'),
-				prev = current.prev();
-
-				if ( prev.length === 0 ) {
-					return;
-				}
-
-				current.removeClass('hover');
-				prev.addClass('hover');
 			},
 			actionEnterACItem = function( e ) {
 				$(this).addClass('hover').siblings().removeClass('hover');
