@@ -17,6 +17,9 @@ form.style-inline > div.controller > input {
   width: 100%;
   box-sizing: border-box;
 }
+form.style-inline > div.controller > input ~ input {
+  display: none;
+}
 form.style-inline ul.token-input {
   border: 1px solid #ccc;
   margin: 0;

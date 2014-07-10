@@ -14,11 +14,6 @@
 		TAB: 9,
 		ENTER: 13,
 		ESCAPE: 27,
-		//SPACE: 32,
-		//PAGE_UP: 33,
-		//PAGE_DOWN: 34,
-		//END: 35,
-		//HOME: 36,
 		LEFT: 37,
 		UP: 38,
 		RIGHT: 39,
@@ -31,23 +26,26 @@
 		values : [],
 
 		// 이 옵션은 반드시 해당 데이터안에서만 사용을 할 수 있도록 합니다.
-		use_data_only : false,
+		// use_data_only : false,
 
-		// 중복값 사용가능 (O)
+		// 중복값 사용가능
 		use_duplicate : false,
 
 		// 결과를 몇개까지 찾을 것인가.
 		max_result : 4
 	},
 
+	NULL_FUNC = function() {},
+
 	TokenInput = function( settings ) {
 
 		var
 		runTokenInput = function() {
 
-			// render :)
 			var
-			self = $(this),
+			form = this,
+
+			self = $(form.elems[0]),
 
 			elem_container = $('<ul class="token-input"></ul>'),
 
@@ -57,7 +55,7 @@
 			elem_autocomplete = $('<div class="autocomplete"></div>'),
 			
 			elem_token = $('<li class="input input-token"></li>'),
-			elem_token_input = $('<input type="hidden" name="' + self[0].name +'" />'), // self.clone(),
+			elem_token_input = $('<input type="hidden" name="' + form.name +'" />'), // self.clone(),
 
 			// use in autocomplete, timeout.
 			is_ing_autocomplete = false,
@@ -75,7 +73,21 @@
 
 				elem_text.append(elem_text_input);
 
-				self.remove();
+				// 처음에 값이 있으면 집어넣어주어야 함.
+				var before_values = [];
+				for( var i =0, ilen = form.elems.length; i < ilen; i++) {
+					if ( typeof form.elems[i].value !== "undefined" && form.elems[i].value ) {
+						before_values.push( form.elems[i].value );
+					}
+					form.elems[i].remove();
+				}
+				// 기존 값이 있으면 미리 렌더를 해야합니다.
+				for ( var i = 0, ilen = before_values.length; i < ilen; i++ ) {
+					insertToken( before_values[i], before_values[i] );
+				}
+
+				// onChange 연결.
+				form.onChange = refreshToken;
 
 				// event bind
 				elem_container.bind('click', actionFocusInput);
@@ -100,28 +112,40 @@
 			removeToken = function() {
 				elem_container.find('li.input-token.hover').remove();
 			},
-			insertToken = function() {
-				var
-				autocomplete_hover = elem_autocomplete.find('div.hover');
+			refreshToken = function() {
+				var tokens = elem_container.find('li.input-token');
+				tokens.each(function() {
+					var
+					id = $(this).find('input').val(),
+					name = $(this).find('p').text(),
+					is_exist = false;
 
-				if ( autocomplete_hover.length === 0 ) {
-					return;
-				}
-
+					for( var i =0, ilen = settings.values.length; i < ilen; i++) {
+						if ( settings.values[i].id == id ) {
+							$(this).find('p').text( settings.values[i].name );
+							is_exist = true;
+							break;
+						}
+					}
+					if ( !is_exist ) {
+						$(this).find('p').text( id );
+					}
+				});
+			},
+			insertToken = function( name, value ) {
 				var
 				new_elem_token = elem_token.clone(),
 				new_elem_token_input = elem_token_input.clone();
 
 				new_elem_token.append( new_elem_token_input );
-				new_elem_token.append('<p>' + autocomplete_hover.text() + '</p><span class="close"></span>');
+				new_elem_token.append('<p>' + name + '</p><span class="close"></span>');
 
-				new_elem_token_input.val( autocomplete_hover.data('value') );
+				new_elem_token_input.val( value );
 
 				elem_text.before( new_elem_token );
 				elem_text_input.val('');
 
 				hideAutocomplete();
-				actionFocusInput();
 			},
 			actionKeydown = function( e ) {
 				var
@@ -135,7 +159,11 @@
 					case KEY.COMMA :
 						e.preventDefault();
 						if ( value === "" ) return;
-						insertToken();
+						var ac_hover = elem_autocomplete.find('div.hover');
+						if ( ac_hover.length ) {
+							insertToken( ac_hover.text(), ac_hover.data('value') );							
+							actionFocusInput();
+						}
 						break;
 					case KEY.DOWN :
 						e.preventDefault();
@@ -216,7 +244,7 @@
 				if ( ! settings.use_duplicate ) {
 					elem_container.find('li.input-token > input').each(function(i, item) {
 						if ( typeof item.value !== "undefined" ) {
-							current_values.push( parseInt(item.value) );							
+							current_values.push( item.value );							
 						} 
 					});
 
@@ -229,7 +257,7 @@
 
 				for( var i = settings.values.length; i--; ) {
 					if ( re.test( settings.values[i]['name'] ) &&
-								$.inArray( settings.values[i]['id'], current_values ) === -1 ) {
+								$.inArray( String(settings.values[i]['id']), current_values ) === -1 ) {
 
 						result.push( settings.values[i] );
 						if ( result.length >= settings.max_result ) {
@@ -288,7 +316,11 @@
 			},
 			actionClickACItem = function( e ) {
 				e.preventDefault();
-				insertToken();
+				var ac_hover = elem_autocomplete.find('div.hover');
+				if ( ac_hover.length ) {
+					insertToken( ac_hover.text(), ac_hover.data('value') );							
+					actionFocusInput();
+				}
 			},
 			actionFocusInput = function() {
 				elem_text_input.focus();
@@ -296,24 +328,67 @@
 
 			initialize();
 
-		};
+		},
+		/**
+			폼을 폼별로, 값 이름 별로 분류합니다. :)
+			form_tree = [
+				{
+					form : <NODE_ELEMENT>,
+					name : "multiple[]",
+					elems : [ <Node_Element>, ... ]
+				},
+				{
+					form : <NODE_ELEMENT>,
+					name : "multiple2[]",
+					elems : []
+				}
+			]
+		 */
+		form_tree = [];
 
-		$.each( this, function() { runTokenInput.apply( this ) });
+		for( var i = 0, ilen = this.length; i < ilen; i++) {
+			var
+			elem = this[i],
+			form = elem.form,
+			name = elem.name,
+			in_tree = false;
+
+			for ( var j = form_tree.length; j-- ;) {
+				if ( form_tree[j].form == form && form_tree[j].name == name ) {
+					in_tree = true;
+					form_tree[j].elems.push( elem );
+					break;
+				}
+			}
+			if ( !in_tree ) {
+				form_tree.push({
+					form : form,
+					name : name,
+					elems : [ elem ],
+					onChange : NULL_FUNC
+				});
+			}
+		}
+
+		$.each( form_tree, function() { runTokenInput.apply( this ) });
 
 		return {
 			add : function( items ) {
 				settings.values = $.extend( settings.values, items );
+				$.each( form_tree, function() { this.onChange(); });
 			},
 			remove : function( item ) {
-
+				console.log("아직 미완성.");
+				$.each( form_tree, function() { this.onChange(); });
 			},
 			clear : function() {
 				settings.values = [];
+				$.each( form_tree, function() { this.onChange(); });
 			},
 			get : function() {
 				return settings.values
 			}
-		}
+		};
 	};
 
 	// Return in Requirejs

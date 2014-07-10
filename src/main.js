@@ -19,6 +19,9 @@ require([
 		{id: 41, name: "C"},
 		{id: 43, name: "C++"},
 		{id: 47, name: "Java"}
-	])
+	]);
+	setTimeout(function() {
+		token.clear();
+	}, 3000);
 
 });
