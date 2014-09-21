@@ -1,12 +1,9 @@
-/**
- *
- */
 ;(function(global, factory){
 	if ( typeof define === 'function' && define.amd ) {
-		define(['vendor/zepto.min'], factory);
+		define(['jquery'], factory);
 	}
 	else {
-		global.TokenInput = factory( global.Zepto );
+		global.TokenInput = factory( global.jQuery );
 	}
 })(this, function( $ ){
 
@@ -15,7 +12,7 @@
 		values : [],
 
 		// 이 옵션은 반드시 해당 데이터안에서만 사용을 할 수 있도록 합니다.
-		// use_data_only : false,
+		use_data_only : true,
 
 		// 중복값 사용가능
 		use_duplicate : false,
@@ -26,7 +23,7 @@
 
 	NULL_FUNC = function() {},
 
-	TokenInput = function( settings ) {
+	TokenInput = function( inputs, settings ) {
 
 		var
 		runTokenInput = function() {
@@ -140,11 +137,11 @@
 				hideAutocomplete();
 			},
 			actionKeydown = function( e ) {
+
 				var
 				self = this,
 				value = $(this).val(),
 				key_code = e.keyCode;
-
 				switch( key_code ) {
 					//case 9 : // TAB 
 					case 13 : // ENTER
@@ -152,9 +149,15 @@
 					case 188 : // COMMA: 188
 						e.preventDefault();
 						if ( value === "" ) return;
-						var ac_hover = elem_autocomplete.find('div.hover');
-						if ( ac_hover.length ) {
-							insertToken( ac_hover.text(), ac_hover.data('value') );							
+						if ( settings.use_data_only ) {
+							var ac_hover = elem_autocomplete.find('div.hover');
+							if ( ac_hover.length ) {
+								insertToken( ac_hover.text(), ac_hover.data('value') );							
+								actionFocusInput();
+							}
+						}
+						else {
+							insertToken( elem_text_input.val(), elem_text_input.val() );
 							actionFocusInput();
 						}
 						break;
@@ -225,6 +228,9 @@
 							break;
 						}
 					default :
+						// 해당 옵션을 키면 자동완성이 필요없음.
+						if ( ! settings.use_data_only ) break;
+
 						//is_run = false;
 						if ( st_id && ! is_ing_autocomplete ) {
 							clearTimeout( st_id );
@@ -323,46 +329,43 @@
 				}
 			]
 		 */
-		form_tree = [];
+		token_groups = [];
 
-		for( var i = 0, ilen = this.length; i < ilen; i++) {
+		$.each( inputs, function( k, elem ) {
 			var
-			elem = this[i],
 			form = elem.form,
 			name = elem.name,
-			in_tree = false;
+			exists_in_tree = $.grep( token_groups, function( item ) {
+				return item.form == form && item.name == name;
+			});
 
-			for ( var j = form_tree.length; j-- ;) {
-				if ( form_tree[j].form == form && form_tree[j].name == name ) {
-					in_tree = true;
-					form_tree[j].elems.push( elem );
-					break;
-				}
-			}
-			if ( !in_tree ) {
-				form_tree.push({
+			if ( exists_in_tree.length === 0 ) {
+				token_groups.push({
 					form : form,
 					name : name,
 					elems : [ elem ],
 					onChange : NULL_FUNC
 				});
 			}
-		}
+			else {
+				exists_in_tree[0].elems.push( elem );
+			}
+		});
 
-		$.each( form_tree, function() { runTokenInput.apply( this ) });
+		$.each( token_groups, function() { runTokenInput.apply( this ) });
 
 		return {
 			add : function( items ) {
 				settings.values = $.extend( settings.values, items );
-				$.each( form_tree, function() { this.onChange(); });
+				$.each( token_groups, function() { this.onChange(); });
 			},
 			remove : function( item ) {
 				console.log("아직 미완성.");
-				$.each( form_tree, function() { this.onChange(); });
+				$.each( token_groups, function() { this.onChange(); });
 			},
 			clear : function() {
 				settings.values = [];
-				$.each( form_tree, function() { this.onChange(); });
+				$.each( token_groups, function() { this.onChange(); });
 			},
 			get : function() {
 				return settings.values
@@ -384,7 +387,7 @@
 				target = settings.target;
 			}
 			delete settings.target;
-			return TokenInput.call( document.querySelectorAll( target ), settings );
+			return TokenInput( $( target ), settings );
 		}
 	};
 

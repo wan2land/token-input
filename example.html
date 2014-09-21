@@ -27,9 +27,14 @@ This web page has been developed by Wani.
 
 	<form class="style style-inline" action="action.php" method="POST">
 		<div class="controller controller-multitoken">
-			<input type="text" class="token-input" name="multitoken[]" value="17" />
-			<input type="text" class="token-input" name="multitoken[]" value="13" />
-			<input type="text" class="token-input" name="multitoken[]" value="31" />
+			<input type="text" class="token-input" name="multitoken[0][]" value="17" />
+			<input type="text" class="token-input" name="multitoken[0][]" value="13" />
+			<input type="text" class="token-input" name="multitoken[0][]" value="31" />
+		</div>
+		<div class="controller controller-multitoken">
+			<input type="text" class="token-input" name="multitoken[1][]" value="5" />
+			<input type="text" class="token-input" name="multitoken[1][]" value="8" />
+			<input type="text" class="token-input" name="multitoken[1][]" value="22" />
 		</div>
 		<div class="controller controller-submit">
 			<button>전송</button>
@@ -49,7 +54,15 @@ This web page has been developed by Wani.
 </div>
 
 
-<script src="/vendor/require.js" data-main="/src/main"></script>
+<script src="/vendor/requirejs/require.js"></script>
+<script>
+requirejs.config({
+	"paths" : {
+		jquery : "vendor/jquery/dist/jquery.min"
+	}
+});
+require(['example']);
+</script>
 <!--
 <script src="/vendor/zepto.min.js"></script>
 <script src="/src/token-input.js"></script>
